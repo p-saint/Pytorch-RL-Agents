@@ -2,20 +2,27 @@ import numpy as np
 
 import torch
 
-from commons.network_modules import ValueNetwork, CriticNetwork, SoftActorNetwork
+from commons.network_modules import ValueNetwork, CriticNetwork, SoftActorNetwork,CriticNetworkProgressive
 from commons.plotter import Plotter
 from commons.Abstract_Agent import AbstractAgent
 
 
 class SAC(AbstractAgent):
 
-    def __init__(self, device, folder, config):
-        super().__init__(device, folder, config)
+    def __init__(self, device, folder, config, prog):
+        super().__init__(device, folder, config, prog)
 
         self.value_net = ValueNetwork(self.state_size, self.config['HIDDEN_VALUE_LAYERS']).to(device)
         self.target_value_net = ValueNetwork(self.state_size, self.config['HIDDEN_VALUE_LAYERS']).to(device)
-        self.soft_Q_net1 = CriticNetwork(self.state_size, self.action_size, self.config['HIDDEN_Q_LAYERS']).to(device)
-        self.soft_Q_net2 = CriticNetwork(self.state_size, self.action_size, self.config['HIDDEN_Q_LAYERS']).to(device)
+        print('Progressive Critic: ',prog)
+        if prog:
+            self.soft_Q_net1 = CriticNetworkProgressive(self.state_size,  self.action_size, self.config['HIDDEN_Q_LAYERS']).to(device)
+            self.soft_Q_net2 = CriticNetworkProgressive(self.state_size, self.action_size, self.config['HIDDEN_Q_LAYERS']).to(device)
+       
+        else: 
+            self.soft_Q_net1 = CriticNetwork(self.state_size, self.action_size, self.config['HIDDEN_Q_LAYERS']).to(device)
+            self.soft_Q_net2 = CriticNetwork(self.state_size, self.action_size, self.config['HIDDEN_Q_LAYERS']).to(device)
+        
         self.soft_actor = SoftActorNetwork(self.state_size, self.action_size, self.config['HIDDEN_PI_LAYERS'], device).to(device)
         self.target_value_net.eval()
 
@@ -43,10 +50,8 @@ class SAC(AbstractAgent):
         return self.soft_actor.select_action(state)
 
     def optimize(self):
-
         if len(self.memory) < self.config['BATCH_SIZE']:
             return {}
-
         states, actions, rewards, next_states, done = self.get_batch()
 
         current_Q1 = self.soft_Q_net1(states, actions)

@@ -1,10 +1,9 @@
-
+# GAME : "Hypercube-v0"
 # GAME : "Pendulum-v0"
 # GAME : "LunarLanderContinuous-v2"
 # GAME : "BipedalWalker-v2"
-GAME : {id: Hypercube-v0,
-        n_dimensions: 1,
-        acceleration: False}
+# GAME : "HandManipulateBlock-v0"
+GAME : {id: LunarLanderContinuous-v2}
 
 HIDDEN_VALUE_LAYERS : [32, 32, 32]
 HIDDEN_Q_LAYERS : [32, 32, 32]

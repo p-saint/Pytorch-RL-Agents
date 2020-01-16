@@ -10,20 +10,19 @@ except ModuleNotFoundError:
 
 import torch
 
-from commons.utils import NormalizedActions, ReplayMemory
-
+from commons.utils import NormalizedActions, ReplayMemory,FlattenObservationOnly
+from gym.wrappers import FlattenObservation
 
 class AbstractAgent(ABC):
 
-    def __init__(self, device, folder, config):
+    def __init__(self, device, folder, config, prog):
 
         self.folder = folder
         self.config = config
         self.device = device
         self.memory = ReplayMemory(self.config['MEMORY_CAPACITY'])
-        self.eval_env = NormalizedActions(gym.make(**self.config['GAME']))
+        self.eval_env = NormalizedActions(FlattenObservation(gym.make(**self.config['GAME'])))
         self.continuous = bool(self.eval_env.action_space.shape)
-
         self.state_size = self.eval_env.observation_space.shape[0]
         if self.continuous:
             self.action_size = self.eval_env.action_space.shape[0]

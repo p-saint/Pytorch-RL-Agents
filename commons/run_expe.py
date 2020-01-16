@@ -10,11 +10,11 @@ except ModuleNotFoundError:
 
 import torch
 import gym
-import gym_hypercube
+#import gym_hypercube
 import matplotlib.pyplot as plt
 
-from commons.utils import NormalizedActions, get_latest_dir
-
+from commons.utils import NormalizedActions, get_latest_dir,FlattenObservationOnly
+from gym.wrappers import FlattenObservation
 
 def load_config(path):
     with open(path, 'r') as file:
@@ -56,8 +56,10 @@ def train(Agent, args):
     print(f"\033[91m\033[1mDevice : {device}\nFolder : {folder}\033[0m")
 
     # Create gym environment and agent
-    env = NormalizedActions(gym.make(**config["GAME"]))
-    model = Agent(device, folder, config)
+    env = NormalizedActions(FlattenObservation(gym.make(**config['GAME'])))
+    
+   
+    model = Agent(device, folder, config,prog = args.prog)
 
     # Load model from a previous run
     if args.load:
@@ -86,11 +88,10 @@ def train(Agent, args):
             episode_reward = 0
 
             state = env.reset()
-
             while not done and step < config["MAX_STEPS"]:
-
+                
+            
                 action = model.select_action(state, episode=episode)
-
                 next_state, reward, done, _ = env.step(action)
                 episode_reward += reward
 
@@ -102,7 +103,6 @@ def train(Agent, args):
 
                 step += 1
                 nb_total_steps += 1
-
             rewards.append(episode_reward)
             lenghts.append(step)
 
