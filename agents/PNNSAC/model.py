@@ -7,15 +7,15 @@ from commons.plotter import Plotter
 from commons.Abstract_Agent import AbstractAgent
 
 
-class SAC(AbstractAgent):
+class PNNSAC(AbstractAgent):
 
-    def __init__(self, device, folder, config, prog):
-        super().__init__(device, folder, config)
+    def __init__(self, device, folder, config, args):
+        super().__init__(device, folder, config,args)
 
         self.value_net = ValueNetwork(self.state_size, self.config['HIDDEN_VALUE_LAYERS']).to(device)
         self.target_value_net = ValueNetwork(self.state_size, self.config['HIDDEN_VALUE_LAYERS']).to(device)
-        print('Progressive Critic: ',prog)
-        if prog:
+        print('Progressive Critic: ',args.prog)
+        if args.prog:
             self.soft_Q_net1 = CriticNetworkProgressive(self.state_size,  self.action_size, self.config['HIDDEN_Q_LAYERS']).to(device)
             self.soft_Q_net2 = CriticNetworkProgressive(self.state_size, self.action_size, self.config['HIDDEN_Q_LAYERS']).to(device)
 
@@ -119,6 +119,10 @@ class SAC(AbstractAgent):
             self.soft_actor.load(self.folder + '/models/soft_actor.pth', self.device)
         except FileNotFoundError:
             raise Exception("No model has been saved !") from None
+
+        if args.ntask:
+            self.new_task()
+
 
     def plot_Q(self, pause=False):
         if self.state_size == 1 and self.action_size == 1:

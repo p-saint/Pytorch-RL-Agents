@@ -15,7 +15,7 @@ from gym.wrappers import FlattenObservation
 
 class AbstractAgent(ABC):
 
-    def __init__(self, device, folder, config):
+    def __init__(self, device, folder, config,args = None):
 
         self.folder = folder
         self.config = config
