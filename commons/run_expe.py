@@ -13,7 +13,7 @@ import gym
 #import gym_hypercube
 import matplotlib.pyplot as plt
 
-from commons.utils import NormalizedActions, get_latest_dir,FlattenObservationOnly
+from commons.utils import NormalizedActions, get_latest_dir
 from gym.wrappers import FlattenObservation
 
 def load_config(path):
@@ -60,7 +60,6 @@ def train(Agent, args):
     env = NormalizedActions(FlattenObservation(gym.make(**config['GAME'])))
 
     model = Agent(device, folder, config,prog = args.prog)
-
     # Load model from a previous run
     if args.load:
         model.load(args.load)

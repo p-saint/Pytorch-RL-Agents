@@ -6,17 +6,6 @@ import numpy as np
 import math
 from collections import deque
 
- 
-class FlattenObservationOnly(gym.ObservationWrapper):
-    r"""Observation wrapper that flattens the observation."""
-    def __init__(self, env):
-        super(FlattenObservationOnly, self).__init__(env)
-        flatdim = gym.spaces.flatdim(env.observation_space['observation'])
-        self.observation_space = gym.spaces.Box(low=-float('inf'), high=float('inf'), shape=(flatdim,), dtype=np.float32)
-
-    def observation(self, observation):
-        return observation['observation']
-
 class ReplayMemory:
 
     def __init__(self, capacity):

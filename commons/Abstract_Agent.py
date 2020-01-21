@@ -10,12 +10,12 @@ except ModuleNotFoundError:
 
 import torch
 
-from commons.utils import NormalizedActions, ReplayMemory,FlattenObservationOnly
+from commons.utils import NormalizedActions, ReplayMemory
 from gym.wrappers import FlattenObservation
 
 class AbstractAgent(ABC):
 
-    def __init__(self, device, folder, config, prog):
+    def __init__(self, device, folder, config):
 
         self.folder = folder
         self.config = config

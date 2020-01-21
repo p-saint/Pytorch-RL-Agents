@@ -100,12 +100,25 @@ class CriticNetworkProgressive(CriticNetwork):
             inputs = out
         return out[task_id]
 
-    def new_task(self,new_layers,shapes):
+    def load(self,file,device):
+        super().load(file,device)
+        self.new_task()
+
+    def new_task(self,new_layers=None,shapes=None):
+        if shapes is None:
+            shapes = self.shapes
+
+        self.shapes = shapes
+
+        if new_layers is None:
+            new_layers = nn.Sequential(*[nn.Linear(self.shapes[i],self.shapes[i+1]) for i in range(len(shapes) - 1)])
+
+        print(new_layers,shapes)
         assert isinstance(new_layers,nn.Sequential)
         assert(len(new_layers) == len(shapes))
 
         task_id = len(self.columns)
-        idx =[i for i,layer in enumerate(new_layers) if isinstance(layer,(nn.Conv2d,nn.Linear))] + [len(new_layers)]
+        idx =[i for i,layer in enumerate(new_layers) if isinstance(layer,(nn.Linear))] + [len(new_layers)]
         new_blocks = []
 
         for k in range(len(idx) -1):
