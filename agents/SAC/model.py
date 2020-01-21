@@ -18,11 +18,11 @@ class SAC(AbstractAgent):
         if prog:
             self.soft_Q_net1 = CriticNetworkProgressive(self.state_size,  self.action_size, self.config['HIDDEN_Q_LAYERS']).to(device)
             self.soft_Q_net2 = CriticNetworkProgressive(self.state_size, self.action_size, self.config['HIDDEN_Q_LAYERS']).to(device)
-       
-        else: 
+
+        else:
             self.soft_Q_net1 = CriticNetwork(self.state_size, self.action_size, self.config['HIDDEN_Q_LAYERS']).to(device)
             self.soft_Q_net2 = CriticNetwork(self.state_size, self.action_size, self.config['HIDDEN_Q_LAYERS']).to(device)
-        
+
         self.soft_actor = SoftActorNetwork(self.state_size, self.action_size, self.config['HIDDEN_PI_LAYERS'], device).to(device)
         self.target_value_net.eval()
 
@@ -76,7 +76,6 @@ class SAC(AbstractAgent):
         expected_new_Q2 = self.soft_Q_net2(states, new_actions)
         expected_new_Q = torch.min(expected_new_Q1, expected_new_Q2)
         target_V = expected_new_Q - alpha * log_prob
-
         loss_Q1 = self.q_criterion1(current_Q1, target_Q.detach())
         loss_Q2 = self.q_criterion2(current_Q2, target_Q.detach())
         loss_V = self.value_criterion(current_V, target_V.detach())
