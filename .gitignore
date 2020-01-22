@@ -6,3 +6,5 @@ results/
 models/
 runs/
 gym/
+
+test_local.py

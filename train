@@ -16,7 +16,8 @@ parser.add_argument('--no_gpu', action='store_false', dest='gpu', help="Don't us
 parser.add_argument('--load', dest='load', type=str, help="Load model")
 parser.add_argument('--prog_a', dest='prog_a', action='store_true', help='Use Progressive Actor with PNNSAC')
 parser.add_argument('--prog_c', dest='prog_c', action='store_true', help='Use Progressive Critic with PNNSAC')
-parser.add_argument('--ntask', dest='ntask', action='store_false', help = 'Change task before training')
+parser.add_argument('--ntask_a', dest='ntask_a', action='store_false', help = 'Change actor task before training, used if a pre-trained model is loaded')
+parser.add_argument('--ntask_c', dest='ntask_c', action='store_false', help = 'Change critic task before training, used if a pre-trained model is loaded')
 args = parser.parse_args()
 
 

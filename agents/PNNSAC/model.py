@@ -2,7 +2,7 @@ import numpy as np
 
 import torch
 
-from commons.network_modules import ValueNetwork, CriticNetwork, SoftActorNetwork,CriticNetworkProgressive
+from commons.network_modules import ValueNetwork, CriticNetwork, SoftActorNetwork,CriticNetworkProgressive, SoftActorNetworkProgressive
 from commons.plotter import Plotter
 from commons.Abstract_Agent import AbstractAgent
 
@@ -11,12 +11,15 @@ class PNNSAC(AbstractAgent):
 
     def __init__(self, device, folder, config, args):
         super().__init__(device, folder, config,args)
-
+        self.prog_a = args.prog_a
+        self.prog_c = args.prog_c
+        self.ntask_a = args.ntask_a
+        self.ntask_c = args.ntask_c
         self.value_net = ValueNetwork(self.state_size, self.config['HIDDEN_VALUE_LAYERS']).to(device)
         self.target_value_net = ValueNetwork(self.state_size, self.config['HIDDEN_VALUE_LAYERS']).to(device)
-        print('Progressive Critic: ',args.prog_c)
-        print('Progressive Actor: ',args.prog_a)
-        if args.prog_c:
+        print('Progressive Critic: ',self.prog_c)
+        print('Progressive Actor: ',self.prog_a)
+        if self.prog_c:
             self.soft_Q_net1 = CriticNetworkProgressive(self.state_size,  self.action_size, self.config['HIDDEN_Q_LAYERS']).to(device)
             self.soft_Q_net2 = CriticNetworkProgressive(self.state_size, self.action_size, self.config['HIDDEN_Q_LAYERS']).to(device)
 
@@ -24,7 +27,7 @@ class PNNSAC(AbstractAgent):
             self.soft_Q_net1 = CriticNetwork(self.state_size, self.action_size, self.config['HIDDEN_Q_LAYERS']).to(device)
             self.soft_Q_net2 = CriticNetwork(self.state_size, self.action_size, self.config['HIDDEN_Q_LAYERS']).to(device)
 
-        if args.prog_a:
+        if self.prog_a:
             self.soft_actor = SoftActorNetworkProgressive(self.state_size, self.action_size, self.config['HIDDEN_PI_LAYERS'], device).to(device)
 
         else:
@@ -115,15 +118,23 @@ class PNNSAC(AbstractAgent):
         self.soft_Q_net1.save(self.folder + '/models/soft_Q.pth')
         self.soft_actor.save(self.folder + '/models/soft_actor.pth')
 
-    def load(self,folder = None,ntask = False):
+    def load(self,folder = None):
         if folder is None:
             folder = self.folder
         try:
             self.value_net.load(folder + '/models/value.pth', self.device)
             self.target_value_net.load(folder + '/models/value_target.pth', self.device)
-            self.soft_Q_net1.load(folder + '/models/soft_Q.pth', self.device,ntask)
-            self.soft_Q_net2.load(folder + '/models/soft_Q.pth', self.device,ntask)
-            self.soft_actor.load(folder + '/models/soft_actor.pth', self.device)
+            if self.prog_a:
+                self.soft_actor.load(folder + '/models/soft_actor.pth', self.device, self.ntask_a)
+            else:
+                self.soft_actor.load(folder + '/models/soft_actor.pth', self.device)
+            if self.prog_c:
+                self.soft_Q_net1.load(folder + '/models/soft_Q.pth', self.device, self.ntask_c)
+                self.soft_Q_net2.load(folder + '/models/soft_Q.pth', self.device, self.ntask_c)
+            else:
+                self.soft_Q_net1.load(folder + '/models/soft_Q.pth', self.device)
+                self.soft_Q_net2.load(folder + '/models/soft_Q.pth', self.device)
+
         except FileNotFoundError:
             raise Exception("No model has been saved !") from None
 

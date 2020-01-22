@@ -86,6 +86,7 @@ class CriticNetworkProgressive(CriticNetwork):
         self.depth = len(hidden_layers_size) + 1
         self.shapes = hidden_layers_size + [1]
         self.new_task(nn.Sequential(*self.hiddens,self.output),self.shapes)
+        
 
     def forward(self,state,action,task_id = - 1):
         x = torch.cat([state, action], -1)
@@ -103,7 +104,7 @@ class CriticNetworkProgressive(CriticNetwork):
         return out[task_id]
 
     def load(self,file,device,ntask = False):
-        super().load(file,device)
+        self.load_state_dict(torch.load(file, map_location=device))
         if ntask:
             self.freeze_columns()
             self.new_task()
@@ -273,19 +274,19 @@ class SoftActorNetwork(nn.Module):
 class SoftActorNetworkProgressive(SoftActorNetwork):
     def __init__(self, state_size, action_size, hidden_layers_size, device,
                  init_w=3e-3, log_std_min=-20, log_std_max=2):
-        super(SoftActorNetworkProgressive,self).__init__(state_size,action_size,hidden_layers_size,hidden_layers_size,device,init_w,log_std_min,log_std_max)
+        super(SoftActorNetworkProgressive,self).__init__(state_size,action_size,hidden_layers_size,device,init_w,log_std_min,log_std_max)
         self.columns = nn.ModuleList([])
         self.depth = len(hidden_layers_size)
         self.shapes = hidden_layers_size
-        self.mean_output = nn.ModuleList(self.mean_output)
-        self.log_std_output = nn.ModuleList(self.log_std)
+        self.mean_output = nn.ModuleList([self.mean_output])
+        self.log_std_output = nn.ModuleList([self.log_std_output])
         self.state_size = state_size
         self.new_task(nn.Sequential(*self.hiddens),self.shapes)
 
     def forward(self, x, task_id = -1):
         x = self.forward_prog(x,task_id = task_id)
-        mean = self.mean_output(x)
-        log_std = torch.tanh(self.log_std_output(x))
+        mean = self.mean_output[task_id](x)
+        log_std = torch.tanh(self.log_std_output[task_id](x))
         log_std = self.log_std_min + (self.log_std_max - self.log_std_min) * (log_std+1) / 2
         return mean, log_std
 
@@ -300,7 +301,7 @@ class SoftActorNetworkProgressive(SoftActorNetwork):
         return out[task_id]
 
     def load(self,file,device,ntask = False):
-        super().load(file,device)
+        self.load_state_dict(torch.load(file, map_location=device))
         if ntask:
             self.freeze_columns()
             self.new_task()
@@ -337,16 +338,6 @@ class SoftActorNetworkProgressive(SoftActorNetwork):
         new_column = nn.ModuleList(new_blocks)
         self.columns.append(new_column)
 
-        # mean_output = nn.Linear(hidden_layers_size[-1], action_size)
-        # mean_output.weight.data.uniform_(-init_w, init_w)
-        # mean_output.bias.data.uniform_(-init_w, init_w)
-        # self.mean_output.append(mean_output)
-        #
-        # log_std_output = nn.Linear(hidden_layers_size[-1], action_size)
-        #
-        # log_std_output.weight.data.uniform_(-init_w, init_w)
-        # log_std_output.bias.data.uniform_(-init_w, init_w)
-        # self.log_std_output.append(log_std_output)
 
 
     def _get_out_shape_blocks(self,blocks):
@@ -365,7 +356,7 @@ class SoftActorNetworkProgressive(SoftActorNetwork):
                 for params in c.parameters():
                     params.requires_grad = False
 
-        for i,(mean,log_std) in enumerate(zip(self.mean_output,self.log_std_output)): 
+        for i,(mean,log_std) in enumerate(zip(self.mean_output,self.log_std_output)):
             if i not in skip:
                 for params in mean.parameters():
                     params.requires_grad = False
