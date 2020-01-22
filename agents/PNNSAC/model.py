@@ -14,8 +14,9 @@ class PNNSAC(AbstractAgent):
 
         self.value_net = ValueNetwork(self.state_size, self.config['HIDDEN_VALUE_LAYERS']).to(device)
         self.target_value_net = ValueNetwork(self.state_size, self.config['HIDDEN_VALUE_LAYERS']).to(device)
-        print('Progressive Critic: ',args.prog)
-        if args.prog:
+        print('Progressive Critic: ',args.prog_c)
+        print('Progressive Actor: ',args.prog_a)
+        if args.prog_c:
             self.soft_Q_net1 = CriticNetworkProgressive(self.state_size,  self.action_size, self.config['HIDDEN_Q_LAYERS']).to(device)
             self.soft_Q_net2 = CriticNetworkProgressive(self.state_size, self.action_size, self.config['HIDDEN_Q_LAYERS']).to(device)
 
@@ -23,7 +24,11 @@ class PNNSAC(AbstractAgent):
             self.soft_Q_net1 = CriticNetwork(self.state_size, self.action_size, self.config['HIDDEN_Q_LAYERS']).to(device)
             self.soft_Q_net2 = CriticNetwork(self.state_size, self.action_size, self.config['HIDDEN_Q_LAYERS']).to(device)
 
-        self.soft_actor = SoftActorNetwork(self.state_size, self.action_size, self.config['HIDDEN_PI_LAYERS'], device).to(device)
+        if args.prog_a:
+            self.soft_actor = SoftActorNetworkProgressive(self.state_size, self.action_size, self.config['HIDDEN_PI_LAYERS'], device).to(device)
+
+        else:
+            self.soft_actor = SoftActorNetwork(self.state_size, self.action_size, self.config['HIDDEN_PI_LAYERS'], device).to(device)
         self.target_value_net.eval()
 
         for target_param, param in zip(self.target_value_net.parameters(), self.value_net.parameters()):
@@ -110,17 +115,14 @@ class PNNSAC(AbstractAgent):
         self.soft_Q_net1.save(self.folder + '/models/soft_Q.pth')
         self.soft_actor.save(self.folder + '/models/soft_actor.pth')
 
-    def load(self,folder = None):
+    def load(self,folder = None,ntask = False):
         if folder is None:
             folder = self.folder
-        print('Current folder argument: ',folder)
-        print('Folder argument: ',self.folder)
-        print('Device argument: ',self.device)
         try:
             self.value_net.load(folder + '/models/value.pth', self.device)
             self.target_value_net.load(folder + '/models/value_target.pth', self.device)
-            self.soft_Q_net1.load(folder + '/models/soft_Q.pth', self.device,args.ntask)
-            self.soft_Q_net2.load(folder + '/models/soft_Q.pth', self.device,args.ntask)
+            self.soft_Q_net1.load(folder + '/models/soft_Q.pth', self.device,ntask)
+            self.soft_Q_net2.load(folder + '/models/soft_Q.pth', self.device,ntask)
             self.soft_actor.load(folder + '/models/soft_actor.pth', self.device)
         except FileNotFoundError:
             raise Exception("No model has been saved !") from None

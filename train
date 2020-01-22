@@ -14,7 +14,8 @@ parser.add_argument('agent', nargs='?', default='DDPG',
                     help="Choose the agent to train (one of {DDPG, TD3, SAC, PNNSAC, DQN}).")
 parser.add_argument('--no_gpu', action='store_false', dest='gpu', help="Don't use GPU")
 parser.add_argument('--load', dest='load', type=str, help="Load model")
-parser.add_argument('--prog', dest='prog', action='store_true', help='Use Progressive Critic with PNNSAC')
+parser.add_argument('--prog_a', dest='prog_a', action='store_true', help='Use Progressive Actor with PNNSAC')
+parser.add_argument('--prog_c', dest='prog_c', action='store_true', help='Use Progressive Critic with PNNSAC')
 parser.add_argument('--ntask', dest='ntask', action='store_false', help = 'Change task before training')
 args = parser.parse_args()
 

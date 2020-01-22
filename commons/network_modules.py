@@ -114,6 +114,8 @@ class CriticNetworkProgressive(CriticNetwork):
 
         if new_layers is None:
             new_layers = deepcopy(nn.Sequential(*self.hiddens,self.output))
+            for l in new_layers:
+                l.reset_parameters()
 
         assert isinstance(new_layers,nn.Sequential)
         assert(len(new_layers) == len(shapes))
@@ -266,3 +268,106 @@ class SoftActorNetwork(nn.Module):
 
     def load(self, file, device):
         self.load_state_dict(torch.load(file, map_location=device))
+
+
+class SoftActorNetworkProgressive(SoftActorNetwork):
+    def __init__(self, state_size, action_size, hidden_layers_size, device,
+                 init_w=3e-3, log_std_min=-20, log_std_max=2):
+        super(SoftActorNetworkProgressive,self).__init__(state_size,action_size,hidden_layers_size,hidden_layers_size,device,init_w,log_std_min,log_std_max)
+        self.columns = nn.ModuleList([])
+        self.depth = len(hidden_layers_size)
+        self.shapes = hidden_layers_size
+        self.mean_output = nn.ModuleList(self.mean_output)
+        self.log_std_output = nn.ModuleList(self.log_std)
+        self.state_size = state_size
+        self.new_task(nn.Sequential(*self.hiddens),self.shapes)
+
+    def forward(self, x, task_id = -1):
+        x = self.forward_prog(x,task_id = task_id)
+        mean = self.mean_output(x)
+        log_std = torch.tanh(self.log_std_output(x))
+        log_std = self.log_std_min + (self.log_std_max - self.log_std_min) * (log_std+1) / 2
+        return mean, log_std
+
+    def forward_prog(self,x,task_id=-1):
+        assert self.columns
+        inputs = [col[0](x) for col in self.columns]
+        for l in range(1,self.depth):
+            out = []
+            for i,col in enumerate(self.columns):
+                out.append(col[l](inputs[:i+1],activated = (l== self.depth - 1)))
+            inputs = out
+        return out[task_id]
+
+    def load(self,file,device,ntask = False):
+        super().load(file,device)
+        if ntask:
+            self.freeze_columns()
+            self.new_task()
+
+    def new_task(self,new_layers=None,shapes=None):
+        if shapes is None:
+            shapes = self.shapes
+
+        if new_layers is None:
+            new_network = SoftActorNetwork(self.state_size,self.action_size,self.shapes,self.device)
+            self.mean_output.append(new_network.mean_output)
+            self.log_std_output.append(new_network.log_std_output)
+            new_layers = nn.Sequential(*new_network.hiddens)
+
+        assert isinstance(new_layers,nn.Sequential)
+        assert(len(new_layers) == len(shapes))
+
+        task_id = len(self.columns)
+        idx =[i for i,layer in enumerate(new_layers) if isinstance(layer,(nn.Linear))] + [len(new_layers)]
+        new_blocks = []
+
+        for k in range(len(idx) -1):
+            prev_blocks = []
+            if k > 0:
+                prev_blocks = [col[k-1] for col in self.columns]
+
+            new_blocks.append(LateralBlock(col = task_id,
+                                           depth = k,
+                                           block = new_layers[idx[k]:idx[k+1]],
+                                           out_shape = shapes[idx[k+1]-1],
+                                           in_shapes = self._get_out_shape_blocks(prev_blocks)
+                                          ))
+
+        new_column = nn.ModuleList(new_blocks)
+        self.columns.append(new_column)
+
+        # mean_output = nn.Linear(hidden_layers_size[-1], action_size)
+        # mean_output.weight.data.uniform_(-init_w, init_w)
+        # mean_output.bias.data.uniform_(-init_w, init_w)
+        # self.mean_output.append(mean_output)
+        #
+        # log_std_output = nn.Linear(hidden_layers_size[-1], action_size)
+        #
+        # log_std_output.weight.data.uniform_(-init_w, init_w)
+        # log_std_output.bias.data.uniform_(-init_w, init_w)
+        # self.log_std_output.append(log_std_output)
+
+
+    def _get_out_shape_blocks(self,blocks):
+        assert isinstance(blocks,list)
+        assert all(isinstance(block,LateralBlock) for block in blocks)
+        return [block.out_shape for block in blocks]
+
+
+
+    def freeze_columns(self, skip=None):
+        if skip == None:
+            skip = []
+
+        for i, c in enumerate(self.columns):
+            if i not in skip:
+                for params in c.parameters():
+                    params.requires_grad = False
+
+        for i,(mean,log_std) in enumerate(zip(self.mean_output,self.log_std_output)): 
+            if i not in skip:
+                for params in mean.parameters():
+                    params.requires_grad = False
+                for params in log_std.parameters():
+                    params.requires_grad = False
