@@ -5,6 +5,7 @@ from functools import reduce
 from operator import mul
 from collections import Iterable
 import torch.nn.functional as F
+from copy import deepcopy
 
 class LateralBlock(nn.Module):
     def __init__(self,col,depth,block,out_shape, in_shapes):
@@ -83,7 +84,8 @@ class CriticNetworkProgressive(CriticNetwork):
         super(CriticNetworkProgressive,self).__init__(state_size,action_size,hidden_layers_size)
         self.columns = nn.ModuleList([])
         self.depth = len(hidden_layers_size) + 1
-        self.new_task(nn.Sequential(*self.hiddens,self.output),hidden_layers_size + [1])
+        self.shapes = hidden_layers_size + [1]
+        self.new_task(nn.Sequential(*self.hiddens,self.output),self.shapes)
 
     def forward(self,state,action,task_id = - 1):
         x = torch.cat([state, action], -1)
@@ -100,20 +102,19 @@ class CriticNetworkProgressive(CriticNetwork):
             inputs = out
         return out[task_id]
 
-    def load(self,file,device):
+    def load(self,file,device,ntask = False):
         super().load(file,device)
-        self.new_task()
+        if ntask:
+            self.freeze_columns()
+            self.new_task()
 
     def new_task(self,new_layers=None,shapes=None):
         if shapes is None:
             shapes = self.shapes
 
-        self.shapes = shapes
-
         if new_layers is None:
-            new_layers = nn.Sequential(*[nn.Linear(self.shapes[i],self.shapes[i+1]) for i in range(len(shapes) - 1)])
+            new_layers = deepcopy(nn.Sequential(*self.hiddens,self.output))
 
-        print(new_layers,shapes)
         assert isinstance(new_layers,nn.Sequential)
         assert(len(new_layers) == len(shapes))
 

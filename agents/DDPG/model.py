@@ -60,7 +60,6 @@ class DDPG(AbstractAgent):
         self.critic.save(self.folder)
 
     def load(self, folder=None):
-        print(folder)
         if folder is None:
             folder = self.folder
         try:

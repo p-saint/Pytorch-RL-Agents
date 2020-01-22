@@ -26,3 +26,7 @@ print(cnp)
 cnp.load(path,device)
 print('CNP après loading: ')
 print(cnp)
+
+print('New task: ')
+cnp.new_task()
+print(cnp)
