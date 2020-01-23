@@ -56,10 +56,12 @@ def train(Agent, args):
     print(f"\033[91m\033[1mDevice : {device}\nFolder : {folder}\033[0m")
 
     # Create gym environment and agent
-    #env = NormalizedActions(FlattenObservation(gym.make(**config['GAME'],reward_type = 'dense')))
-    env = NormalizedActions(FlattenObservation(gym.make(**config['GAME'])))
+    env = NormalizedActions(FlattenObservation(gym.make(**config['GAME'],reward_type = 'dense')))
+    env.spec.max_episode_steps = config["MAX_EPISODES"]
+    #env = NormalizedActions(FlattenObservation(gym.make(**config['GAME'])))
 
-    model = Agent(device, folder, config, args)
+    #model = Agent(device, folder, config, args)
+    model = Agent(device, folder, config)
     # Load model from a previous run
     if args.load:
         model.load(args.load)
@@ -87,9 +89,7 @@ def train(Agent, args):
             episode_reward = 0
 
             state = env.reset()
-            while not done and step < config["MAX_STEPS"]:
-
-
+            while not done:
                 action = model.select_action(state, episode=episode)
                 next_state, reward, done, _ = env.step(action)
                 episode_reward += reward

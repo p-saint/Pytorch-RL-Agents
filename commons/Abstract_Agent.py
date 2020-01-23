@@ -21,8 +21,9 @@ class AbstractAgent(ABC):
         self.config = config
         self.device = device
         self.memory = ReplayMemory(self.config['MEMORY_CAPACITY'])
-        #self.eval_env = NormalizedActions(FlattenObservation(gym.make(**self.config['GAME'],reward_type = 'dense')))
-        self.eval_env = NormalizedActions(FlattenObservation(gym.make(**self.config['GAME'])))
+        self.eval_env = NormalizedActions(FlattenObservation(gym.make(**self.config['GAME'],reward_type = 'dense')))
+        self.eval_env.spec.max_episode_steps = config["MAX_EPISODES"]
+        #self.eval_env = NormalizedActions(FlattenObservation(gym.make(**self.config['GAME'])))
         self.continuous = bool(self.eval_env.action_space.shape)
         self.state_size = self.eval_env.observation_space.shape[0]
         if self.continuous:
@@ -69,7 +70,7 @@ class AbstractAgent(ABC):
                 reward = 0
                 done = False
                 steps = 0
-                while not done and steps < self.config['MAX_STEPS']:
+                while not done:
                     action = self.select_action(state, evaluation=True)
                     state, r, done, _ = self.eval_env.step(action)
                     if render:
