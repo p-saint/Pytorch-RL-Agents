@@ -57,7 +57,7 @@ def train(Agent, args):
 
     # Create gym environment and agent
     env = NormalizedActions(FlattenObservation(gym.make(**config['GAME'],reward_type = 'dense')))
-    env.spec.max_episode_steps = config["MAX_EPISODES"]
+    env.spec.max_episode_steps = config["MAX_STEPS"]
     #env = NormalizedActions(FlattenObservation(gym.make(**config['GAME'])))
 
     #model = Agent(device, folder, config, args)
