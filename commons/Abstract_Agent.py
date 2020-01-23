@@ -21,9 +21,7 @@ class AbstractAgent(ABC):
         self.config = config
         self.device = device
         self.memory = ReplayMemory(self.config['MEMORY_CAPACITY'])
-        self.eval_env = NormalizedActions(FlattenObservation(gym.make(**self.config['GAME'],reward_type = 'dense')))
-        self.eval_env.spec.max_episode_steps = config["MAX_STEPS"]
-        #self.eval_env = NormalizedActions(FlattenObservation(gym.make(**self.config['GAME'])))
+        self.eval_env = NormalizedActions(FlattenObservation(gym.make(**self.config['GAME'])))
         self.continuous = bool(self.eval_env.action_space.shape)
         self.state_size = self.eval_env.observation_space.shape[0]
         if self.continuous:
@@ -63,7 +61,6 @@ class AbstractAgent(ABC):
         if gif:
             writer = imageio.get_writer(self.folder + '/results.gif', duration=0.005)
         render = render and self.display_available
-
         try:
             for i in range(n_ep):
                 state = self.eval_env.reset()
