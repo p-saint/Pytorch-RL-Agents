@@ -6,11 +6,17 @@
 # GAME : "HandManipulateBlockCustom-v0"
 #GAME : {id: HandManipulateBlockCustom-v0}
 
-GAME: {id: 'HandManipulateBlockCustom-v0',
-  entry_point: 'gym.envs.robotics:HandBlockEnv',
-  kwargs: {'target_position': 'random', 'target_rotation': 'xyz','reward_type': 'dense'},
+# GAME: {id: 'HandManipulateBlockCustom-v0',
+#   entry_point: 'gym.envs.robotics:HandBlockEnv',
+#   kwargs: {'target_position': 'random', 'target_rotation': 'xyz','reward_type': 'dense'},
+#   max_episode_steps: 500,
+#   }
+
+GAME: {id: 'FetchSlideCustom-v1',
+  entry_point: 'gym.envs.robotics:FetchSlideEnv',
+  kwargs: {'reward_type': 'dense'},
   max_episode_steps: 500,
-  }
+}
 
 HIDDEN_VALUE_LAYERS : [256,256]
 HIDDEN_Q_LAYERS : [256,256]

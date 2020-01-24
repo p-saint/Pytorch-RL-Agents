@@ -20,14 +20,17 @@ import torch
 
 params = {'id': 'HandManipulateBlockCustom-v0', 'entry_point': 'gym.envs.robotics:HandBlockEnv',
 'kwargs': {'target_position': 'random', 'target_rotation': 'xyz','reward_type': 'dense'},
-'max_episode_steps': 500}
+'max_episode_steps': 2}
 gym.register(**params)
+env = gym.make(params['id'])
+print(dir(env))
 done = False
 env.reset()
 steps = 0
 while not done:
     action = env.action_space.sample()
     next_state, reward, done, _ = env.step(action)
+    print('Reward: {}'.format(reward))
     steps += 1
 print(env.spec.max_episode_steps)
 print('Number of steps: ',steps)
