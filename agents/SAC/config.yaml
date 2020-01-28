@@ -12,12 +12,13 @@
 #   max_episode_steps: 500,
 #   }
 
-GAME: {id: 'FetchSlideCustom-v1',
-  entry_point: 'gym.envs.robotics:FetchSlideEnv',
-  kwargs: {'reward_type': 'dense'},
-  max_episode_steps: 500,
-}
+# GAME: {id: 'FetchSlideCustom-v1',
+#   entry_point: 'gym.envs.robotics:FetchSlideEnv',
+#   kwargs: {'reward_type': 'dense'},
+#   max_episode_steps: 500,
+# }
 
+GAME: {id: 'FetchReach-v1'}
 HIDDEN_VALUE_LAYERS : [256,256]
 HIDDEN_Q_LAYERS : [256,256]
 HIDDEN_PI_LAYERS : [256,256]
@@ -34,7 +35,7 @@ TAU : 0.005
 AUTO_ALPHA : True
 ALPHA_LR : 0.0003
 
-MAX_EPISODES : 10000
+MAX_EPISODES : 50000
 #MAX_STEPS : 500  # Max steps per episode
 
 FREQ_PLOT : 10

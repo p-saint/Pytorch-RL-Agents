@@ -24,9 +24,9 @@ def load_config(path):
         config = yaml.safe_load(file)
     if type(config['GAME']) == str:
         config['GAME'] = {'id': config['GAME']}
-    if type(config['GAME']) == dict:
-        gym.register(**config['GAME'])
-        config['GAME'] = {'id': config['GAME']['id']}
+    # if type(config['GAME']) == dict:
+    #     gym.register(**config['GAME'])
+    #     config['GAME'] = {'id': config['GAME']['id']}
     return config
 
 
@@ -62,7 +62,8 @@ def train(Agent, args):
     print(f"\033[91m\033[1mDevice : {device}\nFolder : {folder}\033[0m")
 
     # Create gym environment and agent
-    env = NormalizedActions(FlattenObservation(gym.make(**config['GAME'])))
+    #env = NormalizedActions(FlattenObservation(gym.make(**config['GAME'],reward_type = 'dense')))
+    env = FlattenObservation(NormalizedActions(gym.make(**config['GAME'],reward_type = 'dense')))
     #model = Agent(device, folder, config, args)
     model = Agent(device, folder, config)
     # Load model from a previous run
